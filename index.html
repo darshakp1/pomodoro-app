@@ -1,0 +1,670 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Pomodoro Timer</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.x/dist/tabler-icons.min.css" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg-primary: #ffffff;
+      --bg-secondary: #f5f5f0;
+      --bg-tertiary: #eeede8;
+      --text-primary: #1a1a18;
+      --text-secondary: #6b6b66;
+      --border-tertiary: rgba(0,0,0,0.10);
+      --border-secondary: rgba(0,0,0,0.20);
+      --border-primary: rgba(0,0,0,0.35);
+      --radius-md: 8px;
+      --radius-lg: 12px;
+      --font: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    }
+
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg-primary: #1c1c1a;
+        --bg-secondary: #242422;
+        --bg-tertiary: #2c2c2a;
+        --text-primary: #f0efe8;
+        --text-secondary: #8a8a84;
+        --border-tertiary: rgba(255,255,255,0.10);
+        --border-secondary: rgba(255,255,255,0.20);
+        --border-primary: rgba(255,255,255,0.35);
+      }
+    }
+
+    body {
+      font-family: var(--font);
+      background: var(--bg-tertiary);
+      color: var(--text-primary);
+      min-height: 100vh;
+      display: flex;
+      align-items: flex-start;
+      justify-content: center;
+      padding: 2rem 1rem;
+    }
+
+    #app {
+      width: 100%;
+      max-width: 480px;
+      position: relative;
+    }
+
+    /* Top navigation tabs */
+    .top-tabs {
+      display: flex;
+      gap: 6px;
+      margin-bottom: 2rem;
+      background: var(--bg-secondary);
+      border-radius: var(--radius-lg);
+      padding: 4px;
+    }
+    .top-tab {
+      flex: 1;
+      padding: 7px 4px;
+      font-size: 13px;
+      border: none;
+      background: transparent;
+      border-radius: var(--radius-md);
+      cursor: pointer;
+      color: var(--text-secondary);
+      transition: all 0.15s;
+      font-weight: 400;
+    }
+    .top-tab.active {
+      background: var(--bg-primary);
+      color: var(--text-primary);
+      font-weight: 500;
+      border: 0.5px solid var(--border-tertiary);
+    }
+
+    /* Mode tabs */
+    .mode-tabs { display: flex; gap: 6px; margin-bottom: 2rem; }
+    .mode-tab {
+      flex: 1;
+      padding: 8px 4px;
+      font-size: 13px;
+      border: 0.5px solid var(--border-tertiary);
+      background: transparent;
+      border-radius: var(--radius-md);
+      cursor: pointer;
+      color: var(--text-secondary);
+      transition: all 0.2s;
+      font-weight: 400;
+    }
+    .mode-tab.active-work  { background: #E1F5EE; border-color: #1D9E75; color: #085041; font-weight: 500; }
+    .mode-tab.active-short { background: #E6F1FB; border-color: #378ADD; color: #0C447C; font-weight: 500; }
+    .mode-tab.active-long  { background: #FAEEDA; border-color: #BA7517; color: #633806; font-weight: 500; }
+
+    /* Timer ring */
+    .timer-ring { display: flex; justify-content: center; margin: 1.5rem 0; }
+    .ring-wrap { position: relative; width: 220px; height: 220px; }
+    .ring-wrap svg { position: absolute; top: 0; left: 0; transform: rotate(-90deg); }
+    .ring-info { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; }
+    #time-display { font-size: 52px; font-weight: 500; letter-spacing: -1px; color: var(--text-primary); font-variant-numeric: tabular-nums; }
+    #session-label { font-size: 13px; color: var(--text-secondary); }
+
+    /* Encouragement */
+    .encourage { font-size: 13px; color: var(--text-secondary); text-align: center; min-height: 1.5em; padding: 0 1rem; margin-bottom: 1.5rem; font-style: italic; }
+
+    /* Controls */
+    .controls { display: flex; justify-content: center; gap: 12px; margin-bottom: 1.5rem; }
+    .btn-main {
+      padding: 10px 32px;
+      border-radius: var(--radius-lg);
+      border: 0.5px solid var(--border-secondary);
+      background: var(--bg-primary);
+      font-size: 15px;
+      font-weight: 500;
+      cursor: pointer;
+      color: var(--text-primary);
+      transition: background 0.1s;
+    }
+    .btn-main:hover { background: var(--bg-secondary); }
+    .btn-icon {
+      width: 40px; height: 40px;
+      border-radius: var(--radius-md);
+      border: 0.5px solid var(--border-tertiary);
+      background: transparent;
+      cursor: pointer;
+      color: var(--text-secondary);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 18px;
+      transition: background 0.1s;
+    }
+    .btn-icon:hover { background: var(--bg-secondary); }
+
+    /* Progress tracker */
+    .progress-section { margin-bottom: 1.5rem; }
+    .progress-header { display: flex; align-items: center; gap: 6px; margin-bottom: 10px; }
+    .progress-label { font-size: 12px; font-weight: 500; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.05em; }
+    .session-tracker { display: flex; gap: 8px; }
+    .session-block { display: flex; flex-direction: column; align-items: center; gap: 4px; flex: 1; }
+    .session-block-label { font-size: 11px; color: var(--text-secondary); }
+    .session-block-bar { width: 100%; height: 8px; border-radius: 4px; background: var(--border-tertiary); overflow: hidden; }
+    .session-block-fill { height: 100%; width: 0%; border-radius: 4px; transition: width 0.4s ease; }
+
+    /* Cards / sections */
+    .section { border: 0.5px solid var(--border-tertiary); border-radius: var(--radius-lg); padding: 1rem 1.25rem; margin-bottom: 1rem; background: var(--bg-primary); }
+    .section-title { font-size: 12px; font-weight: 500; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 12px; }
+
+    /* Setting groups */
+    .setting-group { margin-bottom: 14px; }
+    .setting-group:last-child { margin-bottom: 0; }
+    .setting-label-row { display: flex; align-items: center; gap: 6px; margin-bottom: 8px; }
+    .setting-label { font-size: 14px; color: var(--text-secondary); }
+
+    /* Pills */
+    .pill-row { display: flex; flex-wrap: wrap; gap: 6px; }
+    .pill {
+      padding: 5px 12px;
+      border-radius: 999px;
+      border: 0.5px solid var(--border-secondary);
+      background: transparent;
+      font-size: 13px;
+      cursor: pointer;
+      color: var(--text-secondary);
+      transition: all 0.12s;
+      white-space: nowrap;
+    }
+    .pill:hover { background: var(--bg-secondary); }
+    .pill.selected { background: var(--bg-primary); border-color: var(--border-primary); color: var(--text-primary); font-weight: 500; }
+
+    /* Tooltip */
+    .tooltip-wrap { position: relative; display: inline-flex; align-items: center; }
+    .tooltip-icon { font-size: 14px; color: var(--text-secondary); cursor: default; }
+    .tooltip-box {
+      display: none;
+      position: absolute;
+      left: 50%; transform: translateX(-50%);
+      bottom: calc(100% + 6px);
+      background: var(--bg-primary);
+      border: 0.5px solid var(--border-secondary);
+      border-radius: var(--radius-md);
+      padding: 8px 10px;
+      font-size: 12px;
+      color: var(--text-secondary);
+      width: 220px;
+      text-align: left;
+      z-index: 10;
+      line-height: 1.5;
+    }
+    .tooltip-wrap:hover .tooltip-box { display: block; }
+
+    /* Toggles */
+    .toggle-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
+    .toggle-row:last-child { margin-bottom: 0; }
+    .toggle { position: relative; width: 36px; height: 20px; flex-shrink: 0; }
+    .toggle input { opacity: 0; width: 0; height: 0; }
+    .slider-toggle { position: absolute; inset: 0; background: var(--border-secondary); border-radius: 10px; cursor: pointer; transition: background 0.2s; }
+    .slider-toggle::before { content: ''; position: absolute; width: 14px; height: 14px; left: 3px; top: 3px; background: white; border-radius: 50%; transition: transform 0.2s; }
+    input:checked + .slider-toggle { background: #1D9E75; }
+    input:checked + .slider-toggle::before { transform: translateX(16px); }
+
+    /* Theme buttons */
+    .theme-btns { display: flex; gap: 6px; }
+    .theme-btn { width: 28px; height: 28px; border-radius: 50%; border: 2px solid transparent; cursor: pointer; transition: border-color 0.15s; }
+    .theme-btn.selected { border-color: var(--text-primary); }
+
+    /* Summary stats */
+    .stat-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; margin-bottom: 1.5rem; }
+    .stat-card { background: var(--bg-secondary); border-radius: var(--radius-md); padding: 1rem; text-align: center; }
+    .stat-val { font-size: 24px; font-weight: 500; color: var(--text-primary); }
+    .stat-lbl { font-size: 12px; color: var(--text-secondary); margin-top: 2px; }
+
+    /* Calendar */
+    .cal-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+    .cal-title { font-size: 14px; font-weight: 500; color: var(--text-primary); }
+    .cal-nav { width: 28px; height: 28px; border-radius: var(--radius-md); border: 0.5px solid var(--border-tertiary); background: transparent; cursor: pointer; color: var(--text-secondary); display: flex; align-items: center; justify-content: center; font-size: 14px; }
+    .cal-nav:hover { background: var(--bg-secondary); }
+    .cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; }
+    .cal-dow { font-size: 10px; color: var(--text-secondary); text-align: center; padding-bottom: 4px; }
+    .cal-day { aspect-ratio: 1; border-radius: var(--radius-md); display: flex; align-items: center; justify-content: center; font-size: 11px; color: var(--text-secondary); position: relative; }
+    .cal-day.has-data { color: var(--text-primary); font-weight: 500; }
+    .cal-day.today { border: 0.5px solid var(--border-secondary); }
+    .cal-day-dot { width: 4px; height: 4px; border-radius: 50%; position: absolute; bottom: 3px; left: 50%; transform: translateX(-50%); }
+
+    /* Modal */
+    .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.4); align-items: center; justify-content: center; z-index: 100; }
+    .modal-overlay.show { display: flex; }
+    .modal { background: var(--bg-primary); border: 0.5px solid var(--border-secondary); border-radius: var(--radius-lg); padding: 1.5rem; max-width: 300px; width: 90%; text-align: center; }
+    .modal p { font-size: 14px; color: var(--text-secondary); margin-bottom: 1.25rem; line-height: 1.6; }
+    .modal-btns { display: flex; gap: 8px; justify-content: center; }
+    .modal-btn { padding: 8px 20px; border-radius: var(--radius-md); font-size: 13px; font-weight: 500; cursor: pointer; border: 0.5px solid var(--border-secondary); background: transparent; color: var(--text-primary); transition: background 0.1s; }
+    .modal-btn:hover { background: var(--bg-secondary); }
+    .modal-btn.danger { border-color: #E24B4A; color: #A32D2D; }
+  </style>
+</head>
+<body>
+<div id="app">
+
+  <div class="top-tabs">
+    <button class="top-tab active" onclick="showView('timer')">Timer</button>
+    <button class="top-tab" onclick="showView('summary')">Summary</button>
+    <button class="top-tab" onclick="showView('settings')">Settings</button>
+  </div>
+
+  <!-- TIMER VIEW -->
+  <div id="view-timer">
+    <div class="mode-tabs">
+      <button class="mode-tab" id="tab-work" onclick="switchMode('work')">Focus</button>
+      <button class="mode-tab" id="tab-short" onclick="switchMode('short')">Short break</button>
+      <button class="mode-tab" id="tab-long" onclick="switchMode('long')">Long break</button>
+    </div>
+
+    <div class="timer-ring">
+      <div class="ring-wrap">
+        <svg width="220" height="220" viewBox="0 0 220 220">
+          <circle cx="110" cy="110" r="98" fill="none" stroke-width="6" stroke="rgba(0,0,0,0.08)"/>
+          <circle id="progress-ring" cx="110" cy="110" r="98" fill="none" stroke-width="6" stroke="#1D9E75"
+            stroke-linecap="round" stroke-dasharray="615.75" stroke-dashoffset="0"
+            style="transition: stroke-dashoffset 1s linear, stroke 0.3s"/>
+        </svg>
+        <div class="ring-info">
+          <div id="time-display">25:00</div>
+          <div id="session-label">Session 1 of 4</div>
+        </div>
+      </div>
+    </div>
+
+    <div id="encourage" class="encourage">Stay present. One task at a time.</div>
+
+    <div class="controls">
+      <button class="btn-icon" onclick="confirmReset()" aria-label="Reset"><i class="ti ti-refresh"></i></button>
+      <button class="btn-main" id="start-btn" onclick="toggleTimer()">Start</button>
+      <button class="btn-icon" onclick="skipSession()" aria-label="Skip"><i class="ti ti-player-skip-forward"></i></button>
+    </div>
+
+    <div class="progress-section">
+      <div class="progress-header">
+        <i class="ti ti-chart-bar" style="font-size:14px;color:var(--text-secondary)"></i>
+        <span class="progress-label">Progress</span>
+      </div>
+      <div class="session-tracker" id="session-tracker"></div>
+    </div>
+  </div>
+
+  <!-- SUMMARY VIEW -->
+  <div id="view-summary" style="display:none">
+    <div class="stat-grid" id="stat-grid"></div>
+    <div class="section">
+      <div class="cal-header">
+        <button class="cal-nav" onclick="calNav(-1)" aria-label="Previous month"><i class="ti ti-chevron-left"></i></button>
+        <span class="cal-title" id="cal-title"></span>
+        <button class="cal-nav" onclick="calNav(1)" aria-label="Next month"><i class="ti ti-chevron-right"></i></button>
+      </div>
+      <div class="cal-grid" id="cal-grid"></div>
+    </div>
+  </div>
+
+  <!-- SETTINGS VIEW -->
+  <div id="view-settings" style="display:none">
+    <div class="section">
+      <div class="section-title">Durations</div>
+      <div class="setting-group">
+        <div class="setting-label-row"><span class="setting-label">Focus</span></div>
+        <div class="pill-row" id="work-pills"></div>
+      </div>
+      <div class="setting-group">
+        <div class="setting-label-row"><span class="setting-label">Short break</span></div>
+        <div class="pill-row" id="short-pills"></div>
+      </div>
+      <div class="setting-group">
+        <div class="setting-label-row"><span class="setting-label">Long break</span></div>
+        <div class="pill-row" id="long-pills"></div>
+      </div>
+      <div class="setting-group">
+        <div class="setting-label-row">
+          <span class="setting-label">Sessions before long break</span>
+          <div class="tooltip-wrap">
+            <i class="ti ti-info-circle tooltip-icon"></i>
+            <div class="tooltip-box">After this many focus sessions, you earn a long break. The classic Pomodoro method uses 4 sessions.</div>
+          </div>
+        </div>
+        <div class="pill-row" id="session-pills"></div>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-title">Behaviour</div>
+      <div class="toggle-row">
+        <div style="display:flex;align-items:center;gap:6px">
+          <span style="font-size:14px;color:var(--text-secondary)">Auto-start next session</span>
+          <div class="tooltip-wrap">
+            <i class="ti ti-info-circle tooltip-icon"></i>
+            <div class="tooltip-box">When on, focus and break sessions chain automatically. When off, you start each one manually.</div>
+          </div>
+        </div>
+        <label class="toggle"><input type="checkbox" id="autostart-toggle" onchange="savePrefs()"><span class="slider-toggle"></span></label>
+      </div>
+      <div class="toggle-row">
+        <span style="font-size:14px;color:var(--text-secondary)">Sound on session end</span>
+        <label class="toggle"><input type="checkbox" id="sound-toggle" checked onchange="savePrefs()"><span class="slider-toggle"></span></label>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-title">Theme accent</div>
+      <div class="theme-btns" id="theme-btns">
+        <button class="theme-btn selected" style="background:#1D9E75" data-color="#1D9E75" onclick="setTheme(this)" title="Teal"></button>
+        <button class="theme-btn" style="background:#D85A30" data-color="#D85A30" onclick="setTheme(this)" title="Coral"></button>
+        <button class="theme-btn" style="background:#7F77DD" data-color="#7F77DD" onclick="setTheme(this)" title="Purple"></button>
+        <button class="theme-btn" style="background:#378ADD" data-color="#378ADD" onclick="setTheme(this)" title="Blue"></button>
+        <button class="theme-btn" style="background:#BA7517" data-color="#BA7517" onclick="setTheme(this)" title="Amber"></button>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-title">Data</div>
+      <p style="font-size:13px;color:var(--text-secondary);margin-bottom:12px;line-height:1.6">
+        Your session history and preferences are saved automatically in your browser.
+      </p>
+      <button class="modal-btn danger" onclick="confirmClear()">Clear all history</button>
+    </div>
+  </div>
+
+  <!-- MODALS -->
+  <div class="modal-overlay" id="reset-modal">
+    <div class="modal">
+      <p>Reset the current session? Your progress on this timer will be lost.</p>
+      <div class="modal-btns">
+        <button class="modal-btn" onclick="closeModal('reset-modal')">Cancel</button>
+        <button class="modal-btn danger" onclick="doReset()">Reset</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="clear-modal">
+    <div class="modal">
+      <p>Clear all session history? This cannot be undone.</p>
+      <div class="modal-btns">
+        <button class="modal-btn" onclick="closeModal('clear-modal')">Cancel</button>
+        <button class="modal-btn danger" onclick="doClear()">Clear history</button>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+  const ENCOURAGEMENTS = {
+    work: ['Stay present. One task at a time.','Deep work is your superpower.','You\'re building momentum — keep going.','Distraction is just a test. You\'re passing.','Focus is a muscle. You\'re training it.'],
+    short: ['Breathe. You earned this.','Step away from the screen for a moment.','Hydrate, stretch, reset.','Rest isn\'t lazy — it\'s strategic.','Your brain is consolidating. Good work.'],
+    long: ['You\'ve earned a longer rest.','This break is part of the process.','Go for a short walk if you can.','Recharge fully — you\'ll come back sharper.','Honor the rest as much as the work.']
+  };
+  const WORK_OPTS = [25,30,35,40,45];
+  const SHORT_OPTS = [5,7,9,11,13];
+  const LONG_OPTS = [15,20,25,30];
+  const SESSION_OPTS = [3,4,5];
+  const CIRC = 615.75;
+
+  let sel = {work:25, short:5, long:15};
+  let sessionsGoal = 4;
+  let currentMode = 'work';
+  let timeLeft = 25*60;
+  let running = false;
+  let interval = null;
+  let sessionsDone = 0;
+  let accentColor = '#1D9E75';
+  let encIdx = {work:0, short:0, long:0};
+  let history = {};
+  const TODAY = new Date();
+  let calYear = TODAY.getFullYear(), calMonth = TODAY.getMonth();
+
+  function todayKey() {
+    const d = new Date();
+    return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+  }
+
+  function loadState() {
+    try {
+      const h = localStorage.getItem('pomo_history');
+      const p = localStorage.getItem('pomo_prefs');
+      history = h ? JSON.parse(h) : {};
+      if (p) {
+        const pr = JSON.parse(p);
+        if (pr.sel) sel = pr.sel;
+        if (pr.sessionsGoal) sessionsGoal = pr.sessionsGoal;
+        if (pr.accentColor) accentColor = pr.accentColor;
+        if (pr.autostart) document.getElementById('autostart-toggle').checked = pr.autostart;
+        if (pr.sound === false) document.getElementById('sound-toggle').checked = false;
+      }
+    } catch(e) { history = {}; }
+  }
+
+  function saveHistory() {
+    try { localStorage.setItem('pomo_history', JSON.stringify(history)); } catch(e) {}
+  }
+
+  function savePrefs() {
+    try {
+      const prefs = {
+        sel, sessionsGoal, accentColor,
+        autostart: document.getElementById('autostart-toggle').checked,
+        sound: document.getElementById('sound-toggle').checked
+      };
+      localStorage.setItem('pomo_prefs', JSON.stringify(prefs));
+    } catch(e) {}
+  }
+
+  function recordSession() {
+    const k = todayKey();
+    history[k] = (history[k] || 0) + 1;
+    saveHistory();
+  }
+
+  function getCount(k) { return history[k] || 0; }
+
+  function weekCount() {
+    let n = 0;
+    for (let i = 0; i < 7; i++) {
+      const d = new Date(); d.setDate(d.getDate() - i);
+      const k = d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+      n += history[k] || 0;
+    }
+    return n;
+  }
+
+  function totalCount() { return Object.values(history).reduce((a,b) => a+b, 0); }
+
+  function buildStats() {
+    const items = [
+      {val: getCount(todayKey()), lbl: 'Today'},
+      {val: weekCount(), lbl: 'This week'},
+      {val: totalCount(), lbl: 'All time'},
+      {val: totalCount() * sel.work, lbl: 'Total mins'},
+      {val: sessionsGoal, lbl: 'Session goal'},
+      {val: sel.work + ' min', lbl: 'Focus length'}
+    ];
+    document.getElementById('stat-grid').innerHTML = items.map(i =>
+      `<div class="stat-card"><div class="stat-val">${i.val}</div><div class="stat-lbl">${i.lbl}</div></div>`
+    ).join('');
+  }
+
+  function buildCal() {
+    const months = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+    document.getElementById('cal-title').textContent = months[calMonth] + ' ' + calYear;
+    const firstDay = new Date(calYear, calMonth, 1).getDay();
+    const daysInMonth = new Date(calYear, calMonth+1, 0).getDate();
+    const todayStr = todayKey();
+    const dows = ['Su','Mo','Tu','We','Th','Fr','Sa'];
+    let html = dows.map(d => `<div class="cal-dow">${d}</div>`).join('');
+    for (let i = 0; i < firstDay; i++) html += `<div></div>`;
+    for (let d = 1; d <= daysInMonth; d++) {
+      const key = calYear + '-' + String(calMonth+1).padStart(2,'0') + '-' + String(d).padStart(2,'0');
+      const count = history[key] || 0;
+      const isToday = key === todayStr;
+      const intensity = count === 0 ? 0 : count <= 2 ? 0.25 : count <= 4 ? 0.55 : 0.85;
+      const bg = count > 0 ? `background:${accentColor};opacity:${intensity};` : '';
+      html += `<div class="cal-day${count > 0 ? ' has-data' : ''}${isToday ? ' today' : ''}" title="${count} session${count !== 1 ? 's' : ''}">
+        <div style="position:absolute;inset:0;border-radius:8px;${bg}"></div>
+        <span style="position:relative;z-index:1">${d}</span>
+        <div class="cal-day-dot" style="background:${count > 0 ? accentColor : 'rgba(0,0,0,0.15)'}"></div>
+      </div>`;
+    }
+    document.getElementById('cal-grid').innerHTML = html;
+  }
+
+  function calNav(dir) {
+    calMonth += dir;
+    if (calMonth > 11) { calMonth = 0; calYear++; }
+    else if (calMonth < 0) { calMonth = 11; calYear--; }
+    buildCal();
+  }
+
+  function showView(v) {
+    ['timer','summary','settings'].forEach(n => {
+      document.getElementById('view-' + n).style.display = n === v ? 'block' : 'none';
+    });
+    document.querySelectorAll('.top-tab').forEach((t,i) => t.classList.toggle('active', ['timer','summary','settings'][i] === v));
+    if (v === 'summary') { buildStats(); buildCal(); }
+    if (v === 'settings') { rebuildAllPills(); }
+  }
+
+  function updateModeTabs() {
+    const map = {work:'tab-work', short:'tab-short', long:'tab-long'};
+    Object.entries(map).forEach(([mode, id]) => {
+      const el = document.getElementById(id);
+      el.className = 'mode-tab';
+      if (mode === currentMode) el.classList.add(mode === 'work' ? 'active-work' : mode === 'short' ? 'active-short' : 'active-long');
+    });
+  }
+
+  function buildPills(id, opts, key, isSess) {
+    const c = document.getElementById(id); if (!c) return; c.innerHTML = '';
+    opts.forEach(v => {
+      const b = document.createElement('button');
+      b.className = 'pill' + ((isSess ? v === sessionsGoal : v === sel[key]) ? ' selected' : '');
+      b.textContent = isSess ? v + ' sessions' : v + ' min';
+      b.onclick = () => {
+        if (isSess) { sessionsGoal = v; buildPills(id, opts, key, true); renderTracker(); updateDisplay(); savePrefs(); }
+        else { sel[key] = v; buildPills(id, opts, key, false); if (currentMode === key && !running) { timeLeft = v*60; updateDisplay(); } savePrefs(); }
+      };
+      c.appendChild(b);
+    });
+  }
+
+  function rebuildAllPills() {
+    buildPills('work-pills', WORK_OPTS, 'work', false);
+    buildPills('short-pills', SHORT_OPTS, 'short', false);
+    buildPills('long-pills', LONG_OPTS, 'long', false);
+    buildPills('session-pills', SESSION_OPTS, null, true);
+  }
+
+  function renderTracker() {
+    const t = document.getElementById('session-tracker'); t.innerHTML = '';
+    for (let i = 0; i < sessionsGoal; i++) {
+      const wrap = document.createElement('div'); wrap.className = 'session-block';
+      const lbl = document.createElement('div'); lbl.className = 'session-block-label'; lbl.textContent = i+1;
+      const bar = document.createElement('div'); bar.className = 'session-block-bar';
+      const fill = document.createElement('div'); fill.className = 'session-block-fill'; fill.style.background = accentColor;
+      if (i < sessionsDone) fill.style.width = '100%';
+      else if (i === sessionsDone && currentMode === 'work' && running) fill.style.width = Math.round((1 - timeLeft/(sel.work*60))*100) + '%';
+      bar.appendChild(fill); wrap.appendChild(lbl); wrap.appendChild(bar); t.appendChild(wrap);
+    }
+  }
+
+  function setProgress(r) { document.getElementById('progress-ring').style.strokeDashoffset = CIRC * (1-r); }
+  function formatTime(s) { return String(Math.floor(s/60)).padStart(2,'0') + ':' + String(s%60).padStart(2,'0'); }
+
+  function updateDisplay() {
+    document.getElementById('time-display').textContent = formatTime(timeLeft);
+    setProgress(timeLeft / (sel[currentMode]*60));
+    document.getElementById('session-label').textContent = currentMode === 'work'
+      ? 'Session ' + (Math.min(sessionsDone+1, sessionsGoal)) + ' of ' + sessionsGoal
+      : currentMode === 'short' ? 'Short break' : 'Long break';
+    renderTracker(); updateModeTabs();
+  }
+
+  function showEncouragement(m) {
+    const l = ENCOURAGEMENTS[m];
+    document.getElementById('encourage').textContent = l[encIdx[m]++ % l.length];
+  }
+
+  function toggleTimer() {
+    if (running) { clearInterval(interval); running = false; document.getElementById('start-btn').textContent = 'Resume'; }
+    else { running = true; document.getElementById('start-btn').textContent = 'Pause'; interval = setInterval(tick, 1000); }
+  }
+
+  function tick() {
+    if (timeLeft > 0) { timeLeft--; updateDisplay(); }
+    else { clearInterval(interval); running = false; playSound(); onSessionEnd(); }
+  }
+
+  function onSessionEnd() {
+    if (currentMode === 'work') {
+      recordSession(); sessionsDone++;
+      if (sessionsDone >= sessionsGoal) { sessionsDone = 0; doSwitch('long'); }
+      else doSwitch('short');
+    } else doSwitch('work');
+  }
+
+  function doSwitch(mode) {
+    currentMode = mode; timeLeft = sel[mode]*60;
+    document.getElementById('start-btn').textContent = 'Start';
+    showEncouragement(mode); updateDisplay();
+    if (document.getElementById('autostart-toggle').checked) toggleTimer();
+  }
+
+  function switchMode(mode) {
+    if (running) { clearInterval(interval); running = false; }
+    currentMode = mode; timeLeft = sel[mode]*60;
+    document.getElementById('start-btn').textContent = 'Start';
+    showEncouragement(mode); updateDisplay();
+  }
+
+  function confirmReset() {
+    if (timeLeft === sel[currentMode]*60 && !running) return;
+    document.getElementById('reset-modal').classList.add('show');
+  }
+  function confirmClear() { document.getElementById('clear-modal').classList.add('show'); }
+  function closeModal(id) { document.getElementById(id).classList.remove('show'); }
+
+  function doReset() {
+    closeModal('reset-modal'); clearInterval(interval); running = false;
+    timeLeft = sel[currentMode]*60;
+    document.getElementById('start-btn').textContent = 'Start';
+    updateDisplay();
+  }
+
+  function doClear() {
+    closeModal('clear-modal'); history = {}; saveHistory();
+    if (document.getElementById('view-summary').style.display !== 'none') { buildStats(); buildCal(); }
+  }
+
+  function setTheme(btn) {
+    accentColor = btn.dataset.color;
+    document.getElementById('progress-ring').style.stroke = accentColor;
+    document.querySelectorAll('.theme-btn').forEach(b => b.classList.remove('selected'));
+    btn.classList.add('selected'); renderTracker(); savePrefs();
+  }
+
+  function playSound() {
+    if (!document.getElementById('sound-toggle').checked) return;
+    try {
+      const ctx = new (window.AudioContext || window.webkitAudioContext)();
+      [0, 0.15, 0.3].forEach((t, i) => {
+        const o = ctx.createOscillator(), g = ctx.createGain();
+        o.connect(g); g.connect(ctx.destination);
+        o.frequency.value = [523, 659, 784][i];
+        g.gain.setValueAtTime(0.4, ctx.currentTime + t);
+        g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + t + 0.3);
+        o.start(ctx.currentTime + t); o.stop(ctx.currentTime + t + 0.35);
+      });
+    } catch(e) {}
+  }
+
+  loadState();
+  document.getElementById('progress-ring').style.stroke = accentColor;
+  document.querySelectorAll('.theme-btn').forEach(b => {
+    if (b.dataset.color === accentColor) b.classList.add('selected');
+    else b.classList.remove('selected');
+  });
+  rebuildAllPills();
+  updateDisplay();
+  showEncouragement('work');
+</script>
+</body>
+</html>
