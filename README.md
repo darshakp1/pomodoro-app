@@ -4,7 +4,7 @@ Pomodoro App for focus work management
 
 A clean, no-frills Pomodoro timer built as a single HTML file. No installation, no sign-up, no dependencies — open it in a browser and start focusing.
 
-Live at: `https://yourusername.github.io/pomodoro-app`
+Live at: `https://darshakp1.github.io/pomodoro-app`
 
 ---
 
