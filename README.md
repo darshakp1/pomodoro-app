@@ -1,6 +1,5 @@
 # pomodoro-app
 Pomodoro App for focus work management
-# Pomodoro Timer
 
 A clean, no-frills Pomodoro timer built as a single HTML file. No installation, no sign-up, no dependencies — open it in a browser and start focusing.
 
