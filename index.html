@@ -729,18 +729,18 @@
       sessionsDone = sessionsSkipped.length;
 
       if (sessionsDone >= sessionsGoal) {
-        // Cycle complete — go to long break, then reset cycle
-        longBreaksDone++;
+        // Cycle complete — go to long break
         doSwitch('long');
-        // Cycle state resets after long break ends (in onSessionEnd for break modes)
       } else {
-        shortBreaksDone++;
         doSwitch('short');
       }
     } else {
-      // Break ended — go to focus
-      if (currentMode === 'long') {
-        // Reset cycle counters after long break
+      // Break is ending — count it now (whether natural or skipped)
+      if (currentMode === 'short') {
+        shortBreaksDone++;
+      } else if (currentMode === 'long') {
+        longBreaksDone++;
+        // Reset cycle counters after long break ends
         sessionsSkipped = [];
         sessionsDone = 0;
         shortBreaksDone = 0;
