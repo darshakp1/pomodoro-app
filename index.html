@@ -137,7 +137,7 @@
     .btn-icon:hover { background: var(--bg-secondary); }
 
     /* Progress tracker */
-    .progress-section { margin-bottom: 1.5rem; }
+    .progress-section { margin-bottom: 1rem; }
     .progress-header { display: flex; align-items: center; gap: 6px; margin-bottom: 10px; }
     .progress-label { font-size: 12px; font-weight: 500; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.05em; }
     .session-tracker { display: flex; gap: 8px; }
@@ -145,6 +145,58 @@
     .session-block-label { font-size: 11px; color: var(--text-secondary); }
     .session-block-bar { width: 100%; height: 8px; border-radius: 4px; background: var(--border-tertiary); overflow: hidden; }
     .session-block-fill { height: 100%; width: 0%; border-radius: 4px; transition: width 0.4s ease; }
+
+    /* Status bar strip */
+    .status-strip {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      margin-bottom: 1.5rem;
+      padding: 10px 12px;
+      background: var(--bg-secondary);
+      border-radius: var(--radius-md);
+      border: 0.5px solid var(--border-tertiary);
+    }
+    .status-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .status-label {
+      font-size: 11px;
+      color: var(--text-secondary);
+      width: 72px;
+      flex-shrink: 0;
+      letter-spacing: 0.02em;
+    }
+    .status-bar-track {
+      flex: 1;
+      height: 5px;
+      background: var(--border-tertiary);
+      border-radius: 3px;
+      overflow: hidden;
+    }
+    .status-bar-fill {
+      height: 100%;
+      border-radius: 3px;
+      transition: width 0.4s ease;
+    }
+    .status-count {
+      font-size: 11px;
+      color: var(--text-secondary);
+      width: 28px;
+      text-align: right;
+      flex-shrink: 0;
+      font-variant-numeric: tabular-nums;
+    }
+
+    /* Durations section inside timer tab */
+    .durations-section {
+      border: 0.5px solid var(--border-tertiary);
+      border-radius: var(--radius-lg);
+      padding: 1rem 1.25rem;
+      background: var(--bg-primary);
+    }
 
     /* Cards / sections */
     .section { border: 0.5px solid var(--border-tertiary); border-radius: var(--radius-lg); padding: 1rem 1.25rem; margin-bottom: 1rem; background: var(--bg-primary); }
@@ -277,6 +329,7 @@
       <button class="btn-icon" onclick="skipSession()" aria-label="Skip"><i class="ti ti-player-skip-forward"></i></button>
     </div>
 
+    <!-- Focus progress tracker -->
     <div class="progress-section">
       <div class="progress-header">
         <i class="ti ti-chart-bar" style="font-size:14px;color:var(--text-secondary)"></i>
@@ -284,24 +337,34 @@
       </div>
       <div class="session-tracker" id="session-tracker"></div>
     </div>
-  </div>
 
-  <!-- SUMMARY VIEW -->
-  <div id="view-summary" style="display:none">
-    <div class="stat-grid" id="stat-grid"></div>
-    <div class="section">
-      <div class="cal-header">
-        <button class="cal-nav" onclick="calNav(-1)" aria-label="Previous month"><i class="ti ti-chevron-left"></i></button>
-        <span class="cal-title" id="cal-title"></span>
-        <button class="cal-nav" onclick="calNav(1)" aria-label="Next month"><i class="ti ti-chevron-right"></i></button>
+    <!-- Status strip: focus / short break / long break indicators -->
+    <div class="status-strip">
+      <div class="status-row">
+        <span class="status-label">Focus</span>
+        <div class="status-bar-track">
+          <div class="status-bar-fill" id="status-focus-bar" style="background:#1D9E75;width:0%"></div>
+        </div>
+        <span class="status-count" id="status-focus-count">0 / 4</span>
       </div>
-      <div class="cal-grid" id="cal-grid"></div>
+      <div class="status-row">
+        <span class="status-label">Short break</span>
+        <div class="status-bar-track">
+          <div class="status-bar-fill" id="status-short-bar" style="background:#378ADD;width:0%"></div>
+        </div>
+        <span class="status-count" id="status-short-count">0</span>
+      </div>
+      <div class="status-row">
+        <span class="status-label">Long break</span>
+        <div class="status-bar-track">
+          <div class="status-bar-fill" id="status-long-bar" style="background:#BA7517;width:0%"></div>
+        </div>
+        <span class="status-count" id="status-long-count">0</span>
+      </div>
     </div>
-  </div>
 
-  <!-- SETTINGS VIEW -->
-  <div id="view-settings" style="display:none">
-    <div class="section">
+    <!-- Durations (moved from Settings) -->
+    <div class="durations-section">
       <div class="section-title">Durations</div>
       <div class="setting-group">
         <div class="setting-label-row"><span class="setting-label">Focus</span></div>
@@ -326,7 +389,23 @@
         <div class="pill-row" id="session-pills"></div>
       </div>
     </div>
+  </div>
 
+  <!-- SUMMARY VIEW -->
+  <div id="view-summary" style="display:none">
+    <div class="stat-grid" id="stat-grid"></div>
+    <div class="section">
+      <div class="cal-header">
+        <button class="cal-nav" onclick="calNav(-1)" aria-label="Previous month"><i class="ti ti-chevron-left"></i></button>
+        <span class="cal-title" id="cal-title"></span>
+        <button class="cal-nav" onclick="calNav(1)" aria-label="Next month"><i class="ti ti-chevron-right"></i></button>
+      </div>
+      <div class="cal-grid" id="cal-grid"></div>
+    </div>
+  </div>
+
+  <!-- SETTINGS VIEW (Durations removed) -->
+  <div id="view-settings" style="display:none">
     <div class="section">
       <div class="section-title">Behaviour</div>
       <div class="toggle-row">
@@ -406,7 +485,10 @@
   let timeLeft = 25*60;
   let running = false;
   let interval = null;
-  let sessionsDone = 0;
+  let sessionsDone = 0;           // completed or skipped focus sessions this cycle
+  let sessionsSkipped = [];        // array of booleans: true = skipped, false = completed
+  let shortBreaksDone = 0;         // short breaks taken this cycle
+  let longBreaksDone = 0;          // long breaks taken (lifetime within session state)
   let accentColor = '#1D9E75';
   let encIdx = {work:0, short:0, long:0};
   let history = {};
@@ -520,7 +602,7 @@
     });
     document.querySelectorAll('.top-tab').forEach((t,i) => t.classList.toggle('active', ['timer','summary','settings'][i] === v));
     if (v === 'summary') { buildStats(); buildCal(); }
-    if (v === 'settings') { rebuildAllPills(); }
+    if (v === 'settings') { /* pills now in timer tab, no rebuild needed */ }
   }
 
   function updateModeTabs() {
@@ -539,7 +621,7 @@
       b.className = 'pill' + ((isSess ? v === sessionsGoal : v === sel[key]) ? ' selected' : '');
       b.textContent = isSess ? v + ' sessions' : v + ' min';
       b.onclick = () => {
-        if (isSess) { sessionsGoal = v; buildPills(id, opts, key, true); renderTracker(); updateDisplay(); savePrefs(); }
+        if (isSess) { sessionsGoal = v; buildPills(id, opts, key, true); renderTracker(); updateStatusStrip(); updateDisplay(); savePrefs(); }
         else { sel[key] = v; buildPills(id, opts, key, false); if (currentMode === key && !running) { timeLeft = v*60; updateDisplay(); } savePrefs(); }
       };
       c.appendChild(b);
@@ -559,11 +641,47 @@
       const wrap = document.createElement('div'); wrap.className = 'session-block';
       const lbl = document.createElement('div'); lbl.className = 'session-block-label'; lbl.textContent = i+1;
       const bar = document.createElement('div'); bar.className = 'session-block-bar';
-      const fill = document.createElement('div'); fill.className = 'session-block-fill'; fill.style.background = accentColor;
-      if (i < sessionsDone) fill.style.width = '100%';
-      else if (i === sessionsDone && currentMode === 'work' && running) fill.style.width = Math.round((1 - timeLeft/(sel.work*60))*100) + '%';
+      const fill = document.createElement('div'); fill.className = 'session-block-fill';
+
+      if (i < sessionsSkipped.length) {
+        // This slot has been resolved: completed or skipped
+        if (sessionsSkipped[i]) {
+          // Skipped: red bar, full width
+          fill.style.background = '#E24B4A';
+          fill.style.width = '100%';
+        } else {
+          // Completed: accent color, full width
+          fill.style.background = accentColor;
+          fill.style.width = '100%';
+        }
+      } else if (i === sessionsSkipped.length && currentMode === 'work' && running) {
+        // Current in-progress session
+        fill.style.background = accentColor;
+        fill.style.width = Math.round((1 - timeLeft/(sel.work*60))*100) + '%';
+      }
+      // else: future slot, stays empty
+
       bar.appendChild(fill); wrap.appendChild(lbl); wrap.appendChild(bar); t.appendChild(wrap);
     }
+  }
+
+  function updateStatusStrip() {
+    // Focus bar: sessionsDone out of sessionsGoal (counts completed sessions in cycle)
+    const completedFocus = sessionsSkipped.filter(s => !s).length;
+    const focusPct = sessionsGoal > 0 ? Math.min(100, (completedFocus / sessionsGoal) * 100) : 0;
+    document.getElementById('status-focus-bar').style.width = focusPct + '%';
+    document.getElementById('status-focus-count').textContent = completedFocus + ' / ' + sessionsGoal;
+
+    // Short break bar: shortBreaksDone — cap display at sessionsGoal-1 (max possible in a cycle)
+    const maxShort = Math.max(sessionsGoal - 1, 1);
+    const shortPct = Math.min(100, (shortBreaksDone / maxShort) * 100);
+    document.getElementById('status-short-bar').style.width = shortPct + '%';
+    document.getElementById('status-short-count').textContent = shortBreaksDone;
+
+    // Long break bar: binary — 0 or 1 per cycle
+    const longPct = longBreaksDone > 0 ? 100 : 0;
+    document.getElementById('status-long-bar').style.width = longPct + '%';
+    document.getElementById('status-long-count').textContent = longBreaksDone;
   }
 
   function setProgress(r) { document.getElementById('progress-ring').style.strokeDashoffset = CIRC * (1-r); }
@@ -573,9 +691,11 @@
     document.getElementById('time-display').textContent = formatTime(timeLeft);
     setProgress(timeLeft / (sel[currentMode]*60));
     document.getElementById('session-label').textContent = currentMode === 'work'
-      ? 'Session ' + (Math.min(sessionsDone+1, sessionsGoal)) + ' of ' + sessionsGoal
+      ? 'Session ' + (Math.min(sessionsSkipped.length + 1, sessionsGoal)) + ' of ' + sessionsGoal
       : currentMode === 'short' ? 'Short break' : 'Long break';
-    renderTracker(); updateModeTabs();
+    renderTracker();
+    updateStatusStrip();
+    updateModeTabs();
   }
 
   function showEncouragement(m) {
@@ -590,15 +710,50 @@
 
   function tick() {
     if (timeLeft > 0) { timeLeft--; updateDisplay(); }
-    else { clearInterval(interval); running = false; playSound(); onSessionEnd(); }
+    else { clearInterval(interval); running = false; playSound(); onSessionEnd(false); }
   }
 
-  function onSessionEnd() {
+  // Called when a session ends naturally (skipped=false) or is skipped (skipped=true)
+  function onSessionEnd(skipped) {
     if (currentMode === 'work') {
-      recordSession(); sessionsDone++;
-      if (sessionsDone >= sessionsGoal) { sessionsDone = 0; doSwitch('long'); }
-      else doSwitch('short');
-    } else doSwitch('work');
+      const totalSecs = sel.work * 60;
+      const elapsed = totalSecs - timeLeft;
+      const pctDone = elapsed / totalSecs;
+      // Credit only if natural end (not skipped) AND >=90% complete
+      const credited = !skipped && pctDone >= 0.9;
+
+      if (credited) recordSession();
+
+      // Track this slot: true = skipped/no credit, false = completed with credit
+      sessionsSkipped.push(!credited);
+      sessionsDone = sessionsSkipped.length;
+
+      if (sessionsDone >= sessionsGoal) {
+        // Cycle complete — go to long break, then reset cycle
+        longBreaksDone++;
+        doSwitch('long');
+        // Cycle state resets after long break ends (in onSessionEnd for break modes)
+      } else {
+        shortBreaksDone++;
+        doSwitch('short');
+      }
+    } else {
+      // Break ended — go to focus
+      if (currentMode === 'long') {
+        // Reset cycle counters after long break
+        sessionsSkipped = [];
+        sessionsDone = 0;
+        shortBreaksDone = 0;
+        longBreaksDone = 0;
+      }
+      doSwitch('work');
+    }
+  }
+
+  function skipSession() {
+    clearInterval(interval);
+    running = false;
+    onSessionEnd(true);
   }
 
   function doSwitch(mode) {
@@ -609,6 +764,7 @@
   }
 
   function switchMode(mode) {
+    // Manual mode tab click — just jump to that mode without session logic
     if (running) { clearInterval(interval); running = false; }
     currentMode = mode; timeLeft = sel[mode]*60;
     document.getElementById('start-btn').textContent = 'Start';
@@ -624,6 +780,11 @@
 
   function doReset() {
     closeModal('reset-modal'); clearInterval(interval); running = false;
+    // Reset cycle state
+    sessionsSkipped = [];
+    sessionsDone = 0;
+    shortBreaksDone = 0;
+    longBreaksDone = 0;
     timeLeft = sel[currentMode]*60;
     document.getElementById('start-btn').textContent = 'Start';
     updateDisplay();
@@ -638,7 +799,7 @@
     accentColor = btn.dataset.color;
     document.getElementById('progress-ring').style.stroke = accentColor;
     document.querySelectorAll('.theme-btn').forEach(b => b.classList.remove('selected'));
-    btn.classList.add('selected'); renderTracker(); savePrefs();
+    btn.classList.add('selected'); renderTracker(); updateStatusStrip(); savePrefs();
   }
 
   function playSound() {
